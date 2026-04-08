@@ -52,25 +52,30 @@ def generate_meal_plan():
     send_date = datetime.now().strftime("%d/%m/%Y")
     prompt = (
         f"Eres un nutricionista experto en cocina saludable para la peninsula iberica.\n"
-        f"Genera un plan semanal de comidas saludables completo para la semana que comienza el {send_date}.\n\n"
+        f"Genera un plan semanal de comidas saludables completo para la semana del {send_date}.\n\n"
         f"RESTRICCIONES OBLIGATORIAS:\n"
         f"- Recetas UNICAMENTE con microondas (sin horno, vitroceramica, ni plancha).\n"
-        f"- Frutas y verduras de temporada de la peninsula iberica. Temporada: {season}. Productos: {produce}.\n"
+        f"- Frutas y verduras de temporada: {season}. Productos: {produce}.\n"
         f"- PROHIBIDO: ultraprocesados, quesos fundidos, productos grasientos, fiambres procesados, embutidos grasos.\n"
-        f"- Cocina equilibrada, variada y sencilla. Sin repeticion de platos durante la semana.\n\n"
-        f"FORMATO: HTML completo y autocontenido. Paleta verde (#2e7d32, #a5d6a7) y naranja (#e65100, #ffcc80).\n\n"
-        f"ESTRUCTURA:\n"
-        f"1. Cabecera con titulo y fecha {send_date}.\n"
-        f"2. Introduccion motivadora (2-3 frases).\n"
-        f"3. Tabla semanal Lunes-Domingo: columnas Desayuno, Comida, Cena.\n"
-        f"4. Recetas Destacadas: ingredientes y pasos con potencia/tiempo exactos de microondas.\n"
-        f"5. Lista de la Compra: Frutas/verduras, Proteinas, Cereales/legumbres, Lacteos, Otros.\n"
-        f"6. Pie motivador."
+        f"- Cocina equilibrada, variada. Sin repeticion de platos durante la semana.\n\n"
+        f"FORMATO: HTML completo y autocontenido con CSS MINIMO inline. "
+        f"Paleta: verde (#2e7d32) y naranja (#e65100) sobre fondo blanco #ffffff.\n"
+        f"USA ESTILOS INLINE DIRECTAMENTE EN CADA ELEMENTO, no bloques CSS largos.\n\n"
+        f"ESTRUCTURA DEL HTML (en este orden exacto):\n"
+        f"1. <head> con <style> muy breve (max 20 lineas de CSS basico).\n"
+        f"2. <body> con un <div> contenedor.\n"
+        f"3. Cabecera verde oscuro con titulo 'Plan Semanal de Comidas Saludables' y fecha {send_date}.\n"
+        f"4. Parrafo introductorio motivador.\n"
+        f"5. Tabla semanal: columnas DIA | DESAYUNO | COMIDA | CENA para Lunes a Domingo.\n"
+        f"6. Seccion 'Recetas Destacadas' con las 7 comidas principales: ingredientes y pasos microondas (potencia W y tiempo).\n"
+        f"7. Seccion 'Lista de la Compra': Frutas/verduras, Proteinas, Cereales/legumbres, Lacteos, Otros.\n"
+        f"8. Pie de pagina motivador.\n\n"
+        f"IMPORTANTE: Prioriza el contenido real sobre el CSS. Usa estilos simples."
     )
     print("Generando plan semanal con Claude...")
     message = client.messages.create(
         model="claude-opus-4-6",
-        max_tokens=4096,
+        max_tokens=8096,
         messages=[{"role": "user", "content": prompt}],
     )
     html = message.content[0].text
