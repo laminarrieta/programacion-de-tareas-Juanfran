@@ -2,9 +2,7 @@ name: Plan Semanal de Comidas
 
 on:
   schedule:
-    # Todos los domingos a las 19:30 UTC = 21:30 hora espanola en verano (CEST)
     - cron: '30 19 * * 0'
-  # Permite ejecucion manual desde la pestana Actions (para pruebas)
   workflow_dispatch:
 
 permissions:
