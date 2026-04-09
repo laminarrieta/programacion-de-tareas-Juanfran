@@ -15,10 +15,10 @@ import anthropic
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
-SENDER_EMAIL   = "laminarrieta@gmail.com"
-RECEIVER_EMAIL = "laminarrieta@gmail.com"
-SMTP_HOST      = "smtp.gmail.com"
-SMTP_PORT      = 465
+SENDER_EMAIL    = "laminarrieta@gmail.com"
+RECEIVER_EMAILS = ["laminarrieta@gmail.com", "maite.ruffo@gmail.com"]
+SMTP_HOST       = "smtp.gmail.com"
+SMTP_PORT       = 465
 
 SEASONAL_PRODUCE = {
     1:  "naranjas, mandarinas, limones, kiwis, peras, manzanas, espinacas, acelgas, col, coliflor, brocoli, puerros, zanahorias, remolachas",
@@ -172,13 +172,12 @@ def build_pdf(html, week_info):
     pdf.ln(4)
 
     # Secciones: combinar headings y tablas
-    headings   = parse_headings_from_html(html)
-    tables     = parse_tables_from_html(html)
+    headings    = parse_headings_from_html(html)
+    tables      = parse_tables_from_html(html)
     h2_headings = [h for h in headings if h[0] == "h2"]
-    table_idx  = 0
+    table_idx   = 0
 
     for h2_title, _ in h2_headings:
-        # Encabezado de sección
         pdf.set_font("Helvetica", "B", 11)
         pdf.ln(3)
         pdf.cell(0, 8, h2_title, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
@@ -199,7 +198,6 @@ def build_pdf(html, week_info):
         usable_w = pdf.w - pdf.l_margin - pdf.r_margin
         n_cols   = max(len(r) for r in rows)
 
-        # Anchos de columna: primera más estrecha si hay 4 columnas (DIA)
         if n_cols == 4:
             col_w = [usable_w * 0.13, usable_w * 0.29, usable_w * 0.29, usable_w * 0.29]
         elif n_cols == 3:
@@ -212,25 +210,20 @@ def build_pdf(html, week_info):
         for r_idx, row in enumerate(rows):
             is_header = (r_idx == 0)
 
-            # Calcular altura de fila (la celda más alta)
             row_height = 0
             for c_idx, cell_text in enumerate(row):
                 if c_idx >= n_cols:
                     break
                 w = col_w[c_idx] if c_idx < len(col_w) else col_w[-1]
                 pdf.set_font("Helvetica", "B" if is_header else "", 8)
-                lines = pdf.multi_cell(w, 5, cell_text, dry_run=True,
-                                       output="LINES")
+                lines = pdf.multi_cell(w, 5, cell_text, dry_run=True, output="LINES")
                 cell_h = len(lines) * 5 + 4
                 row_height = max(row_height, cell_h)
 
             row_height = max(row_height, 10)
 
-            # Salto de página si no cabe
             if pdf.get_y() + row_height > pdf.h - pdf.b_margin:
                 pdf.add_page()
-
-            x_start = pdf.l_margin
 
             for c_idx, cell_text in enumerate(row):
                 if c_idx >= n_cols:
@@ -245,15 +238,11 @@ def build_pdf(html, week_info):
                 else:
                     pdf.set_fill_color(255, 255, 255)
 
-                pdf.set_xy(x_start + sum(col_w[:c_idx]), pdf.get_y())
+                pdf.set_xy(pdf.l_margin + sum(col_w[:c_idx]), pdf.get_y())
                 pdf.multi_cell(w, 5, cell_text, border=1, fill=True,
                                max_line_height=5,
                                new_x=XPos.RIGHT if c_idx < n_cols - 1 else XPos.LMARGIN,
                                new_y=YPos.TOP   if c_idx < n_cols - 1 else YPos.NEXT)
-
-            pdf.set_y(pdf.get_y() + (0 if row == rows[-1] else 0))
-            # Sincronizar Y al final de la fila
-            pdf.set_y(pdf.get_y())
 
         pdf.ln(2)
 
@@ -285,7 +274,7 @@ def send_email(html_content, pdf_bytes, week_info):
     msg = MIMEMultipart("mixed")
     msg["Subject"] = subject
     msg["From"]    = SENDER_EMAIL
-    msg["To"]      = RECEIVER_EMAIL
+    msg["To"]      = ", ".join(RECEIVER_EMAILS)
 
     alt = MIMEMultipart("alternative")
     plain = (f"Plan Semanal de Comidas - Semana {week_info['week_num']}/{week_info['year']} "
@@ -300,10 +289,10 @@ def send_email(html_content, pdf_bytes, week_info):
     pdf_part.add_header("Content-Disposition", "attachment", filename=pdf_name)
     msg.attach(pdf_part)
 
-    print(f"Enviando email a {RECEIVER_EMAIL}...")
+    print(f"Enviando email a: {', '.join(RECEIVER_EMAILS)}...")
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as s:
         s.login(SENDER_EMAIL, password)
-        s.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_bytes())
+        s.sendmail(SENDER_EMAIL, RECEIVER_EMAILS, msg.as_bytes())
 
     print(f"Enviado: '{subject}'  |  Adjunto: '{pdf_name}'")
 
